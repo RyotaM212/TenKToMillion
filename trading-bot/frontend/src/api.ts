@@ -57,6 +57,53 @@ export type LlmAnalysisReport = {
   adopted: number;
 };
 
+export type LlmCostItem = {
+  id: number;
+  analysis_date: string;
+  status: string;
+  model_name: string;
+  started_at: string;
+  finished_at: string | null;
+  prompt_tokens: number;
+  cached_prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  estimated_cost_usd: number;
+  estimated_cost_jpy: number;
+  error_message: string | null;
+};
+
+export type LlmCostHistory = {
+  items: LlmCostItem[];
+  total_estimated_cost_usd: number;
+  total_estimated_cost_jpy: number;
+  total_tokens: number;
+  currency_note: string;
+};
+
+export type SourceCandidate = {
+  symbol: string;
+  symbol_name: string;
+  strategy_name: string;
+  score: number;
+  selected_reason: string;
+};
+
+export type DataSourceResult = {
+  source: string;
+  status: string;
+  snapshot_count: number;
+  candidate_count: number;
+  top_candidates: SourceCandidate[];
+  error_message: string | null;
+};
+
+export type DataSourceComparison = {
+  sources: Record<string, DataSourceResult>;
+  overlap_symbols: string[];
+  summary: string;
+};
+
 export type DashboardData = {
   current_asset: number;
   buying_power: number;
@@ -98,6 +145,22 @@ export async function postLlmAction(action: "run-daily-analysis" | "backtest-pro
   const response = await fetch(`${API_BASE}/api/llm/${action}`, { method: "POST" });
   if (!response.ok) {
     throw new Error(`${action} の実行に失敗しました`);
+  }
+  return response.json();
+}
+
+export async function fetchLlmCosts(): Promise<LlmCostHistory> {
+  const response = await fetch(`${API_BASE}/api/llm/costs`);
+  if (!response.ok) {
+    throw new Error("OpenAI料金履歴の取得に失敗しました");
+  }
+  return response.json();
+}
+
+export async function fetchDataSourceComparison(): Promise<DataSourceComparison> {
+  const response = await fetch(`${API_BASE}/api/data-sources/compare`);
+  if (!response.ok) {
+    throw new Error("データソース比較の取得に失敗しました");
   }
   return response.json();
 }

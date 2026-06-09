@@ -36,13 +36,38 @@ class YahooCollector(MarketDataCollector):
             except RuntimeError:
                 continue
             if prices:
-                snapshots.append(prices[-1])
+                snapshots.append(self._with_daily_volume_fallback(symbol, prices[-1]))
         if not snapshots:
             raise RuntimeError("Yahoo Finance returned no usable ranking data for configured symbols.")
         return sorted(
             snapshots,
             key=lambda item: ((item.close - item.previous_close) / max(item.previous_close, 1), item.volume),
             reverse=True,
+        )
+
+    def _with_daily_volume_fallback(self, symbol: str, snapshot: MarketSnapshot) -> MarketSnapshot:
+        if snapshot.volume > 0:
+            return snapshot
+        try:
+            daily_prices = self.fetch_daily_prices(symbol)
+        except RuntimeError:
+            return snapshot
+        if not daily_prices:
+            return snapshot
+        daily = daily_prices[-1]
+        return MarketSnapshot(
+            symbol=snapshot.symbol,
+            symbol_name=snapshot.symbol_name,
+            snapshot_time=snapshot.snapshot_time,
+            price=snapshot.price,
+            volume=daily.volume,
+            vwap=snapshot.vwap,
+            open=snapshot.open,
+            high=snapshot.high,
+            low=snapshot.low,
+            close=snapshot.close,
+            previous_close=snapshot.previous_close,
+            news_score=snapshot.news_score,
         )
 
     def _fetch_chart(self, symbol: str, range_value: str, interval: str) -> list[MarketSnapshot]:

@@ -2,11 +2,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.analysis.data_source_comparison import DataSourceComparison
 from app.analysis.optimizer import latest_experiments
 from app.config import get_settings
 from app.analysis.strategy_evaluator import StrategyEvaluator
 from app.db import fetch_all, init_db
 from app.llm.analyst_service import AnalystService
+from app.llm.costs import OpenAICostService
 from app.scheduler.jobs import build_scheduler
 from app.services import (
     dashboard,
@@ -103,6 +105,11 @@ def get_experiments():
     return latest_experiments()
 
 
+@app.get("/api/data-sources/compare")
+def get_data_source_comparison():
+    return DataSourceComparison().compare()
+
+
 @app.get("/api/llm/reports")
 def get_llm_reports():
     return AnalystService().reports()
@@ -116,6 +123,11 @@ def get_latest_llm_report():
 @app.get("/api/llm/runs")
 def get_llm_runs():
     return AnalystService().runs()
+
+
+@app.get("/api/llm/costs")
+def get_llm_costs():
+    return OpenAICostService().history()
 
 
 @app.post("/api/bot/run-screening")

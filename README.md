@@ -62,6 +62,14 @@ curl -X POST http://localhost:8000/api/bot/run-analysis
 curl -X POST http://localhost:8000/api/bot/run-optimization
 ```
 
+DashboardにはOpenAI APIの利用料金履歴も表示されます。これはDBに保存済みの `token_usage_json` から概算計算するだけなので、画面更新でOpenAIへ追加リクエストは行いません。
+
+J-QuantsとYahoo系の候補差分は、Dashboardの「比較」ボタンまたは以下で確認できます。この比較は外部データ取得を行うため、自動更新ではなく明示実行のみです。
+
+```bash
+curl http://localhost:8000/api/data-sources/compare
+```
+
 ## Secret 設定
 
 Yahoo系データ取得にはSecretは不要です。J-Quantsを使う場合は、J-Quants API V2のAPIキーを設定します。
@@ -129,10 +137,12 @@ CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 - FastAPI backend / React Vite frontend / SQLite / APScheduler
 - J-Quants API V2 x-api-key 認証
 - Yahoo系データ取得口
+- J-Quants/Yahoo系の候補比較APIとDashboard表示
 - 候補生成、スコアリング、4戦略比較
 - 3資金管理モードの同時ペーパー検証
 - 日次レポート、戦略比較、改善案保存、採用済みパラメータ反映
 - OpenAI LLM Analyst、JSON検証、提案リプレイバックテスト
+- OpenAI API利用料金の概算履歴表示
 - 10:30 新規エントリー停止、14:45 仮想ポジション強制決済ジョブ
 - Docker Compose ローカル起動
 - GitHub Actions CI
@@ -213,9 +223,11 @@ GET  /api/reports/daily
 GET  /api/strategy/params
 GET  /api/strategy/comparison
 GET  /api/experiments
+GET  /api/data-sources/compare
 GET  /api/llm/reports
 GET  /api/llm/reports/latest
 GET  /api/llm/runs
+GET  /api/llm/costs
 POST /api/bot/run-screening
 POST /api/bot/run-paper-trade
 POST /api/bot/stop-new-entries

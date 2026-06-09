@@ -4,13 +4,17 @@ import json
 import os
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import patch
 
 from app.config import get_settings
+from app.analysis.data_source_comparison import DataSourceComparison
+from app.collectors.yahoo_collector import YahooCollector
 from app.db import fetch_all, fetch_one, init_db
 from app.llm.analyst_service import AnalystService
+from app.llm.costs import OpenAICostService
 from app.llm.schemas import AnalystClientResult
 from app.models import MarketSnapshot
 from app.scheduler.jobs import build_scheduler
@@ -153,6 +157,31 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(report.model_name, "test-analyst")
         self.assertEqual(fetch_one("SELECT status FROM llm_analysis_runs ORDER BY id DESC LIMIT 1")["status"], "success")
         self.assertGreater(len(fetch_all("SELECT * FROM strategy_experiments")), 0)
+        costs = OpenAICostService().history()
+        self.assertEqual(costs["items"][0]["total_tokens"], 1)
+        self.assertGreaterEqual(costs["items"][0]["estimated_cost_usd"], 0)
+
+    def test_data_source_comparison_uses_both_collectors_without_persisting_candidates(self) -> None:
+        with (
+            patch("app.analysis.data_source_comparison.JQuantsCollector", return_value=FakeCollector()),
+            patch("app.analysis.data_source_comparison.YahooCollector", return_value=FakeCollector()),
+        ):
+            result = DataSourceComparison().compare()
+
+        self.assertEqual(result["sources"]["jquants"]["status"], "success")
+        self.assertEqual(result["sources"]["yahoo"]["status"], "success")
+        self.assertGreater(result["sources"]["jquants"]["candidate_count"], 0)
+        self.assertEqual(len(fetch_all("SELECT * FROM candidates")), 0)
+
+    def test_yahoo_collector_uses_daily_volume_when_intraday_volume_is_zero(self) -> None:
+        intraday = replace(FakeCollector().fetch_ranking()[0], volume=0)
+        daily = FakeCollector().fetch_ranking()[1]
+        collector = YahooCollector()
+        with patch.object(collector, "fetch_daily_prices", return_value=[daily]):
+            enriched = collector._with_daily_volume_fallback(intraday.symbol, intraday)
+
+        self.assertEqual(enriched.volume, daily.volume)
+        self.assertEqual(enriched.price, intraday.price)
 
     def test_scheduler_contains_full_daily_automation(self) -> None:
         scheduler = build_scheduler()
@@ -229,6 +258,17 @@ class PipelineTest(unittest.TestCase):
         parser = ResponseParser()
         with self.assertRaises(ValueError):
             parser.parse("{}")
+        caution = {
+            "summary_text": "x",
+            "win_patterns": [],
+            "lose_patterns": [],
+            "risk_notes": ["信用取引、空売り、レバレッジ、実売買の発注は禁止として扱う。"],
+            "improvement_suggestions": [],
+            "next_day_hypotheses": [],
+            "proposed_params": {},
+            "confidence_score": 0.5,
+        }
+        self.assertEqual(parser.parse(json.dumps(caution, ensure_ascii=False))["confidence_score"], 0.5)
         forbidden = {
             "summary_text": "x",
             "win_patterns": [],

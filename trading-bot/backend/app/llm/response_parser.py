@@ -15,7 +15,28 @@ REQUIRED_FIELDS = (
     "confidence_score",
 )
 
-FORBIDDEN_TERMS = ("信用", "空売り", "レバレッジ", "証券API", "実売買", "発注", "RiskGuardを無効")
+DANGEROUS_OUTPUT_PATTERNS = (
+    "信用取引を使",
+    "信用取引を利用",
+    "信用で買",
+    "空売りを使",
+    "空売りを利用",
+    "ショートを使",
+    "ショートを利用",
+    "レバレッジを使",
+    "レバレッジを利用",
+    "証券APIで発注",
+    "実売買を有効",
+    "実売買で発注",
+    "自動発注",
+    "発注する",
+    "注文を出す",
+    "RiskGuardを無効",
+    "ナンピンする",
+    "ナンピンを許可",
+    "持ち越しする",
+    "持ち越しを許可",
+)
 
 
 class ResponseParser:
@@ -53,7 +74,7 @@ class ResponseParser:
         parsed["confidence_score"] = confidence
 
         output_text = json.dumps(parsed, ensure_ascii=False)
-        if any(term in output_text for term in FORBIDDEN_TERMS):
-            raise ValueError("LLM output contains forbidden trading or risk-control terms.")
+        if any(pattern in output_text for pattern in DANGEROUS_OUTPUT_PATTERNS):
+            raise ValueError("LLM output contains forbidden trading or risk-control instructions.")
 
         return parsed

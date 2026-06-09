@@ -535,6 +535,15 @@ tbody tr:hover {
   border-color: rgba(167, 139, 250, 0.2);
 }
 
+.costPanel {
+  grid-column: span 6;
+}
+
+.dataSourcePanel {
+  grid-column: span 12;
+  border-color: rgba(34, 211, 238, 0.15);
+}
+
 .llmPanel::before {
   content: "";
   position: absolute;
@@ -655,6 +664,148 @@ tbody tr:hover {
   color: var(--text-muted);
   font-size: 12px;
   margin: 0;
+}
+
+/* ── OpenAI cost ── */
+.costSummary {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.costSummary div {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.costSummary span {
+  color: var(--text-muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.costSummary strong {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 17px;
+}
+
+.miniStatus {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  display: inline-flex;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  text-transform: uppercase;
+}
+
+.miniStatus.success,
+.miniStatus.ok {
+  background: var(--positive-dim);
+  border-color: rgba(63, 185, 80, 0.35);
+  color: var(--positive);
+}
+
+.miniStatus.failed,
+.miniStatus.error {
+  background: var(--negative-dim);
+  border-color: rgba(248, 81, 73, 0.35);
+  color: var(--negative);
+}
+
+.miniStatus.running {
+  background: rgba(227, 179, 65, 0.1);
+  border-color: rgba(227, 179, 65, 0.35);
+  color: var(--warning);
+}
+
+/* ── Data source comparison ── */
+.iconTextButton {
+  min-width: 86px;
+}
+
+.comparisonSummary,
+.overlapLine {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+}
+
+.overlapLine {
+  align-items: center;
+  color: var(--accent);
+  display: flex;
+  gap: 8px;
+}
+
+.sourceCompareGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.sourceColumn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.sourceColumnHead {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.sourceColumnHead strong {
+  text-transform: uppercase;
+}
+
+.sourceColumn ol {
+  display: grid;
+  gap: 7px;
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.sourceColumn li {
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  display: flex;
+  font-size: 12px;
+  gap: 10px;
+  justify-content: space-between;
+  padding-top: 7px;
+}
+
+.sourceColumn li strong {
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+}
+
+.sourceError {
+  color: var(--negative);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 10px 0 0;
 }
 
 /* ── Footer ── */

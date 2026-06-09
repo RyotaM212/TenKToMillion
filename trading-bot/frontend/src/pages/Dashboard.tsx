@@ -1,12 +1,14 @@
 import { Activity, AlertCircle, BarChart3, Bot, Database, Play, RefreshCw, ShieldCheck, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import type { DashboardData } from "../api";
-import { fetchDashboard, postBotAction, postLlmAction, postState } from "../api";
+import type { DashboardData, DataSourceComparison, LlmCostHistory } from "../api";
+import { fetchDashboard, fetchDataSourceComparison, fetchLlmCosts, postBotAction, postLlmAction, postState } from "../api";
 import { CandidateList } from "../components/CandidateList";
+import { DataSourceComparisonPanel } from "../components/DataSourceComparisonPanel";
 import { EquityCurve } from "../components/EquityCurve";
 import { LlmAnalystPanel } from "../components/LlmAnalystPanel";
 import { ModeComparison } from "../components/ModeComparison";
+import { OpenAICostPanel } from "../components/OpenAICostPanel";
 import { StrategyComparison } from "../components/StrategyComparison";
 import { StrategyParamsPanel } from "../components/StrategyParamsPanel";
 import { TradeTable } from "../components/TradeTable";
@@ -35,11 +37,15 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [costs, setCosts] = useState<LlmCostHistory | null>(null);
+  const [comparison, setComparison] = useState<DataSourceComparison | null>(null);
 
   async function load() {
     setError(null);
     try {
-      setData(await fetchDashboard());
+      const [dashboard, costHistory] = await Promise.all([fetchDashboard(), fetchLlmCosts()]);
+      setData(dashboard);
+      setCosts(costHistory);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "不明なエラーが発生しました");
     } finally {
@@ -81,6 +87,18 @@ export function Dashboard() {
       await load();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "設定の更新に失敗しました");
+    } finally {
+      setRunning(null);
+    }
+  }
+
+  async function compareSources() {
+    setRunning("compare-data-sources");
+    setError(null);
+    try {
+      setComparison(await fetchDataSourceComparison());
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "データソース比較に失敗しました");
     } finally {
       setRunning(null);
     }
@@ -176,6 +194,8 @@ export function Dashboard() {
         <CandidateList candidates={data.candidates} />
         <TradeTable trades={data.trades} />
         <StrategyParamsPanel experiments={data.experiments} />
+        <OpenAICostPanel costs={costs} />
+        <DataSourceComparisonPanel comparison={comparison} loading={running === "compare-data-sources"} onCompare={compareSources} />
         <LlmAnalystPanel report={data.llm_report} />
       </div>
 
