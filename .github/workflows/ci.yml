@@ -66,6 +66,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare compose env file
+        run: cp trading-bot/backend/.env.example trading-bot/backend/.env
+
       - name: Validate compose config
         run: docker compose config --quiet
 
@@ -84,7 +87,7 @@ jobs:
 
       - name: Check for committed secrets
         run: |
-          ! git grep -n -E '(^|[^A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}|xnYh__|OPENAI_API_KEY=[A-Za-z0-9_-]{20,}|JQUANTS_API_KEY=[A-Za-z0-9_-]{20,}' -- . ':(exclude)trading-bot/backend/.env'
+          ! git grep -n -E '(^|[^A-Za-z0-9_])sk-[A-Za-z0-9_-]{20,}|xnYh__|OPENAI_API_KEY=[A-Za-z0-9_-]{20,}|JQUANTS_API_KEY=[A-Za-z0-9_-]{20,}' -- . ':(exclude).github/workflows/ci.yml' ':(exclude)trading-bot/backend/.env'
 
       - name: Check whitespace
         run: git diff --check HEAD
