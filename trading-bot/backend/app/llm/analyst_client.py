@@ -8,34 +8,6 @@ from app.config import get_settings
 from app.llm.schemas import AnalystClientResult
 
 
-class MockAnalystClient:
-    model_name = "mock-analyst"
-
-    def analyze(self, prompt: str) -> AnalystClientResult:
-        output = {
-            "summary_text": "本日はペーパートレード条件に合う取引が少なく、無理に入らない判断が優先されました。",
-            "win_patterns": ["VWAP上で価格が維持され、出来高を伴う候補を優先する設計は継続して検証価値があります。"],
-            "lose_patterns": ["候補スコアが低い日や出来高が薄い時間帯では、エントリー条件に届かず機会損失が発生しやすいです。"],
-            "risk_notes": ["出来高が0または極端に少ないスナップショットは、判定材料として弱いため除外継続が妥当です。"],
-            "improvement_suggestions": [
-                "候補が0件の日も市場スナップショット数と除外理由を記録する",
-                "エントリー開始時刻を9:15以降にして寄り付き直後のノイズを避ける検証を行う",
-            ],
-            "next_day_hypotheses": ["9:15以降かつVWAP上で出来高が継続する銘柄に限定すると、不要な取引を抑制できる可能性があります。"],
-            "proposed_params": {
-                "entry_start_time": "09:15",
-                "entry_end_time": "10:20",
-                "take_profit_rate": 0.12,
-                "stop_loss_rate": 0.06,
-                "volume_spike_threshold": 3.5,
-                "breakout_threshold": 0.012,
-                "vwap_exit_enabled": True,
-            },
-            "confidence_score": 0.62,
-        }
-        return AnalystClientResult(model_name=self.model_name, content=json.dumps(output, ensure_ascii=False), token_usage={"mock": True})
-
-
 class OpenAIAnalystClient:
     def __init__(self) -> None:
         settings = get_settings()
@@ -78,4 +50,4 @@ class OpenAIAnalystClient:
 def build_analyst_client():
     if get_settings().openai_api_key:
         return OpenAIAnalystClient()
-    return MockAnalystClient()
+    raise RuntimeError("OPENAI_API_KEY is not configured. LLM analysis requires a real OpenAI API key.")

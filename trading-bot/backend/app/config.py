@@ -8,7 +8,7 @@ from pathlib import Path
 class Settings:
     app_env: str = "local"
     database_path: str = "./tenk_to_million.db"
-    data_source: str = "mock"
+    data_source: str = "jquants"
     initial_cash: int = 10_000
     jquants_api_key: str = ""
     jquants_email: str = ""
@@ -38,7 +38,7 @@ def get_settings() -> Settings:
     return Settings(
         app_env=_value("APP_ENV", env, "local"),
         database_path=_value("DATABASE_PATH", env, "./tenk_to_million.db"),
-        data_source=_value("DATA_SOURCE", env, "mock"),
+        data_source=_value("DATA_SOURCE", env, "jquants"),
         initial_cash=int(_value("INITIAL_CASH", env, "10000")),
         jquants_api_key=_value("JQUANTS_API_KEY", env, ""),
         jquants_email=_value("JQUANTS_EMAIL", env, ""),

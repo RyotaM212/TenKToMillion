@@ -10,7 +10,7 @@ services:
       CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       SCHEDULER_ENABLED: "true"
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - tenk_data:/data
     restart: unless-stopped
@@ -26,7 +26,7 @@ services:
     environment:
       VITE_API_BASE_URL: http://localhost:8000
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     depends_on:
       backend:
         condition: service_healthy

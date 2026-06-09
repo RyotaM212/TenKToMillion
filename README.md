@@ -31,10 +31,10 @@ SQLite DB は Docker volume `tenk_data` の `/data/tenk_to_million.db` に永続
 
 ## 明日から実績を作るための設定
 
-まずはAPIキー不要のYahoo系リアルデータで動かすのが最短です。
+J-Quants APIキーを設定したうえで、公式APIデータを使って動かします。Yahoo系データは障害時の予備データソースです。
 
 ```text
-DATA_SOURCE=yahoo
+DATA_SOURCE=jquants
 YAHOO_FINANCE_ENABLED=true
 MARKET_SYMBOLS=3778,2160,4565,6920,5253,7014,1514,5586,5595,6526
 SCHEDULER_ENABLED=true
@@ -71,7 +71,7 @@ JQUANTS_API_KEY=...
 
 旧APIの互換用として `JQUANTS_EMAIL` / `JQUANTS_PASSWORD` も読み込みますが、通常は `JQUANTS_API_KEY` を使ってください。
 
-LLM AnalystはOpenAI APIキーがない場合、自動で `MockAnalystClient` を使います。ChatGPT/OpenAIで本番分析する場合は以下を設定してください。
+LLM Analystを使う場合はOpenAI APIキーが必要です。未設定の場合、AI分析は明示的に失敗します。
 
 ```text
 OPENAI_API_KEY=...
@@ -94,7 +94,7 @@ python scripts/set_secret.py JQUANTS_API_KEY
 
 `OPENAI_API_KEY` は OpenAI Platform の API keys 画面で作成します。表示されたキーはこのスクリプトのプロンプトに貼り付けてください。`.env` は `.gitignore` 対象なのでcommitされません。
 
-`JQUANTS_API_KEY` は J-Quants のAPIキー管理画面で作成します。未設定の間は `DATA_SOURCE=yahoo` のままでも実データ取得は動きます。
+`JQUANTS_API_KEY` は J-Quants のAPIキー管理画面で作成します。J-Quantsが使えない場合のみ `DATA_SOURCE=yahoo` に切り替えてください。
 
 `.env` は `.gitignore` 対象です。実際の認証情報はGitHubにcommitしないでください。
 
@@ -103,7 +103,7 @@ python scripts/set_secret.py JQUANTS_API_KEY
 ```text
 APP_ENV=local
 DATABASE_PATH=./tenk_to_million.db
-DATA_SOURCE=yahoo
+DATA_SOURCE=jquants
 INITIAL_CASH=10000
 JQUANTS_API_KEY=
 JQUANTS_EMAIL=

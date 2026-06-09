@@ -21,7 +21,7 @@ const emptyDashboard: DashboardData = {
   max_drawdown: 0,
   mode: "YOLO_MODE",
   active_strategy: "HybridStrategy",
-  data_source: "mock",
+  data_source: "jquants",
   candidates: [],
   positions: [],
   trades: [],
@@ -132,7 +132,6 @@ export function Dashboard() {
         <label>
           データソース
           <select disabled={isBusy} value={data.data_source} onChange={(e) => void updateState("set-data-source", e.currentTarget.value)}>
-            <option value="mock">Mock</option>
             <option value="yahoo">Yahoo系</option>
             <option value="jquants">J-Quants</option>
           </select>

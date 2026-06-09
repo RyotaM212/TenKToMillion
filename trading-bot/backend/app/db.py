@@ -184,6 +184,7 @@ def init_db() -> None:
         conn.executescript(SCHEMA)
         conn.execute("INSERT OR IGNORE INTO app_state(key, value) VALUES('mode', 'YOLO_MODE')")
         conn.execute("INSERT OR IGNORE INTO app_state(key, value) VALUES('data_source', ?)", (settings.data_source,))
+        conn.execute("UPDATE app_state SET value = ? WHERE key = 'data_source' AND value = 'mock'", (settings.data_source,))
         conn.execute("INSERT OR IGNORE INTO app_state(key, value) VALUES('active_strategy', 'HybridStrategy')")
 
 

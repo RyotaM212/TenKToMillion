@@ -1,14 +1,13 @@
-from datetime import date
+from datetime import date, datetime
 
 from app.analysis.daily_analyzer import DailyAnalyzer
 from app.analysis.optimizer import Optimizer
 from app.collectors.jquants_collector import JQuantsCollector
 from app.collectors.market_data_collector import MarketDataCollector
-from app.collectors.mock_collector import MockCollector
 from app.collectors.yahoo_collector import YahooCollector
 from app.config import get_settings
 from app.db import execute, fetch_all, fetch_one, init_db
-from app.models import CAPITAL_MODES, STRATEGY_NAMES, StrategyParams
+from app.models import CAPITAL_MODES, STRATEGY_NAMES, MarketSnapshot, StrategyParams
 from app.screening.universe_filter import UniverseFilter
 from app.strategies import build_strategies
 from app.trading.execution_engine import ExecutionEngine
@@ -21,13 +20,13 @@ def get_collector() -> MarketDataCollector:
         return JQuantsCollector()
     if source == "yahoo":
         return YahooCollector()
-    return MockCollector()
+    raise RuntimeError(f"Unsupported data source: {source}")
 
 
 def set_app_state(key: str, value: str) -> dict[str, str]:
     allowed_values = {
         "mode": CAPITAL_MODES,
-        "data_source": ("mock", "yahoo", "jquants"),
+        "data_source": ("yahoo", "jquants"),
         "active_strategy": STRATEGY_NAMES,
     }
     if key not in allowed_values:
@@ -65,9 +64,14 @@ def persist_snapshot(snapshot) -> None:
 
 def run_screening() -> dict[str, int]:
     init_db()
-    execute("DELETE FROM candidates WHERE trade_date = ?", (date.today().isoformat(),))
     collector = get_collector()
-    snapshots = collector.fetch_ranking()
+    try:
+        snapshots = collector.fetch_ranking()
+    except RuntimeError:
+        snapshots = latest_market_snapshots()
+        if not snapshots:
+            raise
+    execute("DELETE FROM candidates WHERE trade_date = ?", (date.today().isoformat(),))
     for snapshot in snapshots:
         persist_snapshot(snapshot)
 
@@ -101,6 +105,30 @@ def run_screening() -> dict[str, int]:
             )
             created += 1
     return {"created": created}
+
+
+def latest_market_snapshots() -> list[MarketSnapshot]:
+    rows = fetch_all("SELECT * FROM market_snapshots ORDER BY created_at DESC, id DESC LIMIT 500")
+    snapshots_by_symbol: dict[str, MarketSnapshot] = {}
+    for row in rows:
+        symbol = str(row["symbol"])
+        if symbol in snapshots_by_symbol:
+            continue
+        snapshots_by_symbol[symbol] = MarketSnapshot(
+            symbol=symbol,
+            symbol_name=str(row["symbol_name"]),
+            snapshot_time=datetime.fromisoformat(str(row["snapshot_time"])),
+            price=float(row["price"]),
+            volume=int(row["volume"]),
+            vwap=float(row["vwap"]),
+            open=float(row["open"]),
+            high=float(row["high"]),
+            low=float(row["low"]),
+            close=float(row["close"]),
+            previous_close=float(row["previous_close"]),
+            news_score=float(row["news_score"]),
+        )
+    return list(snapshots_by_symbol.values())
 
 
 def run_paper_trade() -> dict[str, int]:
@@ -142,7 +170,7 @@ def dashboard() -> dict:
         "max_drawdown": min([float(row["max_drawdown"]) for row in active_reports], default=0),
         "mode": active_mode,
         "active_strategy": active_strategy,
-        "data_source": state.get("data_source", "mock"),
+        "data_source": state.get("data_source", get_settings().data_source),
         "candidates": candidates,
         "positions": positions,
         "trades": trades,
