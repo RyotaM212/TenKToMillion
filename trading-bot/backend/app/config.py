@@ -10,9 +10,12 @@ class Settings:
     database_path: str = "./tenk_to_million.db"
     data_source: str = "mock"
     initial_cash: int = 10_000
+    jquants_api_key: str = ""
     jquants_email: str = ""
     jquants_password: str = ""
     yahoo_finance_enabled: bool = False
+    openai_api_key: str = ""
+    openai_analyst_model: str = "gpt-4.1-mini"
     scheduler_enabled: bool = False
     cors_origins: tuple[str, ...] = ("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174", "http://127.0.0.1:5174")
     market_symbols: tuple[str, ...] = (
@@ -37,9 +40,12 @@ def get_settings() -> Settings:
         database_path=_value("DATABASE_PATH", env, "./tenk_to_million.db"),
         data_source=_value("DATA_SOURCE", env, "mock"),
         initial_cash=int(_value("INITIAL_CASH", env, "10000")),
+        jquants_api_key=_value("JQUANTS_API_KEY", env, ""),
         jquants_email=_value("JQUANTS_EMAIL", env, ""),
         jquants_password=_value("JQUANTS_PASSWORD", env, ""),
         yahoo_finance_enabled=_value("YAHOO_FINANCE_ENABLED", env, "false").lower() == "true",
+        openai_api_key=_value("OPENAI_API_KEY", env, ""),
+        openai_analyst_model=_value("OPENAI_ANALYST_MODEL", env, "gpt-4.1-mini"),
         scheduler_enabled=_value("SCHEDULER_ENABLED", env, "false").lower() == "true",
         cors_origins=tuple(
             origin.strip()

@@ -123,6 +123,7 @@ def dashboard() -> dict:
     candidates = fetch_all("SELECT * FROM candidates ORDER BY score DESC LIMIT 20")
     positions = fetch_all("SELECT * FROM paper_positions ORDER BY updated_at DESC")
     experiments = fetch_all("SELECT * FROM strategy_experiments ORDER BY created_at DESC LIMIT 20")
+    llm_report = fetch_one("SELECT * FROM llm_analysis_reports ORDER BY created_at DESC LIMIT 1")
     state_rows = fetch_all("SELECT key, value FROM app_state")
     state = {row["key"]: row["value"] for row in state_rows}
     active_mode = state.get("mode", "YOLO_MODE")
@@ -147,6 +148,7 @@ def dashboard() -> dict:
         "trades": trades,
         "reports": reports,
         "experiments": experiments,
+        "llm_report": llm_report,
     }
 
 

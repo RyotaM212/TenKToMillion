@@ -6,6 +6,7 @@ from app.analysis.optimizer import latest_experiments
 from app.config import get_settings
 from app.analysis.strategy_evaluator import StrategyEvaluator
 from app.db import fetch_all, init_db
+from app.llm.analyst_service import AnalystService
 from app.scheduler.jobs import build_scheduler
 from app.services import dashboard, default_strategy_params, run_analysis, run_optimization, run_paper_trade, run_screening, set_app_state
 
@@ -92,6 +93,21 @@ def get_experiments():
     return latest_experiments()
 
 
+@app.get("/api/llm/reports")
+def get_llm_reports():
+    return AnalystService().reports()
+
+
+@app.get("/api/llm/reports/latest")
+def get_latest_llm_report():
+    return AnalystService().latest_report() or {}
+
+
+@app.get("/api/llm/runs")
+def get_llm_runs():
+    return AnalystService().runs()
+
+
 @app.post("/api/bot/run-screening")
 def post_run_screening():
     return run_screening()
@@ -110,6 +126,19 @@ def post_run_analysis():
 @app.post("/api/bot/run-optimization")
 def post_run_optimization():
     return run_optimization()
+
+
+@app.post("/api/llm/run-daily-analysis")
+def post_run_llm_daily_analysis():
+    from datetime import date
+
+    report = AnalystService().run_daily_analysis(date.today())
+    return report.__dict__
+
+
+@app.post("/api/llm/backtest-proposals")
+def post_backtest_llm_proposals():
+    return AnalystService().backtest_latest_proposals()
 
 
 @app.post("/api/bot/set-mode")

@@ -127,6 +127,36 @@ CREATE TABLE IF NOT EXISTS strategy_experiments (
   reason TEXT NOT NULL,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS llm_analysis_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  analysis_date TEXT NOT NULL,
+  model_name TEXT NOT NULL,
+  input_summary_json TEXT NOT NULL,
+  output_json TEXT NOT NULL,
+  summary_text TEXT NOT NULL,
+  win_patterns TEXT NOT NULL,
+  lose_patterns TEXT NOT NULL,
+  risk_notes TEXT NOT NULL,
+  improvement_suggestions TEXT NOT NULL,
+  next_day_hypotheses TEXT NOT NULL,
+  proposed_params_json TEXT NOT NULL,
+  confidence_score REAL NOT NULL,
+  backtest_result_json TEXT NOT NULL DEFAULT '{}',
+  adopted INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS llm_analysis_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  analysis_date TEXT NOT NULL,
+  status TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  finished_at TEXT,
+  error_message TEXT,
+  token_usage_json TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 

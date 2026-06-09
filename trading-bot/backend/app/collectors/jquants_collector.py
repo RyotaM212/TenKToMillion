@@ -12,7 +12,8 @@ from app.models import MarketSnapshot
 
 
 class JQuantsCollector(MarketDataCollector):
-    base_url = "https://api.jquants.com/v1"
+    base_url_v1 = "https://api.jquants.com/v1"
+    base_url_v2 = "https://api.jquants.com/v2"
 
     def __init__(self) -> None:
         self._id_token: str | None = None
@@ -20,8 +21,10 @@ class JQuantsCollector(MarketDataCollector):
 
     def _ensure_configured(self) -> None:
         settings = get_settings()
+        if settings.jquants_api_key:
+            return
         if not settings.jquants_email or not settings.jquants_password:
-            raise RuntimeError("J-Quants credentials are not configured. Set them via local .env or GitHub Secrets.")
+            raise RuntimeError("J-Quants credentials are not configured. Set JQUANTS_API_KEY or legacy email/password in .env.")
 
     def fetch_symbols(self) -> list[dict[str, str]]:
         self._ensure_configured()
@@ -30,10 +33,14 @@ class JQuantsCollector(MarketDataCollector):
 
     def fetch_daily_prices(self, symbol: str) -> list[MarketSnapshot]:
         self._ensure_configured()
-        payload = self._request_json("GET", f"/prices/daily_quotes?{urlencode({'code': symbol})}")
-        quotes = payload.get("daily_quotes") or []
+        if get_settings().jquants_api_key:
+            payload = self._request_json_v2("/equities/bars/daily", {"code": symbol})
+            quotes = payload.get("data") or []
+        else:
+            payload = self._request_json("GET", f"/prices/daily_quotes?{urlencode({'code': symbol})}")
+            quotes = payload.get("daily_quotes") or []
         names = self._fetch_listed_names()
-        snapshots = [self._quote_to_snapshot(quote, names.get(symbol, symbol)) for quote in quotes]
+        snapshots = [self._quote_to_snapshot(quote, names.get(_normalize_symbol(symbol), symbol)) for quote in quotes]
         return [snapshot for snapshot in snapshots if snapshot is not None]
 
     def fetch_intraday_prices(self, symbol: str) -> list[MarketSnapshot]:
@@ -61,26 +68,32 @@ class JQuantsCollector(MarketDataCollector):
     def _fetch_listed_names(self) -> dict[str, str]:
         if self._listed_names is not None:
             return self._listed_names
-        payload = self._request_json("GET", "/listed/info")
-        rows = payload.get("info") or []
+        if get_settings().jquants_api_key:
+            payload = self._request_json_v2("/equities/master", {})
+            rows = payload.get("data") or []
+        else:
+            payload = self._request_json("GET", "/listed/info")
+            rows = payload.get("info") or []
         self._listed_names = {
-            str(row.get("Code", "")).strip(): str(row.get("CompanyName") or row.get("CompanyNameEnglish") or row.get("Code") or "").strip()
+            _normalize_symbol(_first_present(row, "Code", "code", "LocalCode", "Code5")): str(
+                _first_present(row, "CoName", "CompanyName", "CoNameEn", "CompanyNameEnglish", "Code", "code") or ""
+            ).strip()
             for row in rows
-            if row.get("Code")
+            if _first_present(row, "Code", "code", "LocalCode", "Code5")
         }
         return self._listed_names
 
     def _quote_to_snapshot(self, quote: dict, symbol_name: str) -> MarketSnapshot | None:
-        symbol = str(quote.get("Code") or "").strip()
-        close = _as_float(quote.get("AdjustmentClose") or quote.get("Close"))
-        open_price = _as_float(quote.get("AdjustmentOpen") or quote.get("Open"))
-        high = _as_float(quote.get("AdjustmentHigh") or quote.get("High"))
-        low = _as_float(quote.get("AdjustmentLow") or quote.get("Low"))
-        previous_close = _as_float(quote.get("AdjustmentPreviousClose") or quote.get("PreviousClose"))
+        symbol = _normalize_symbol(_first_present(quote, "Code", "code", "LocalCode", "Code5"))
+        close = _as_float(_first_present(quote, "AdjustmentClose", "Close", "C", "close"))
+        open_price = _as_float(_first_present(quote, "AdjustmentOpen", "Open", "O", "open"))
+        high = _as_float(_first_present(quote, "AdjustmentHigh", "High", "H", "high"))
+        low = _as_float(_first_present(quote, "AdjustmentLow", "Low", "L", "low"))
+        previous_close = _as_float(_first_present(quote, "AdjustmentPreviousClose", "PreviousClose", "PrevC", "previous_close"))
         if not symbol or close is None or open_price is None or high is None or low is None:
             return None
-        volume = int(_as_float(quote.get("AdjustmentVolume") or quote.get("Volume")) or 0)
-        date_text = str(quote.get("Date") or datetime.now().date().isoformat())
+        volume = int(_as_float(_first_present(quote, "AdjustmentVolume", "Volume", "Vo", "volume")) or 0)
+        date_text = str(_first_present(quote, "Date", "D", "date") or datetime.now().date().isoformat())
         baseline = previous_close or open_price
         return MarketSnapshot(
             symbol=symbol,
@@ -106,9 +119,22 @@ class JQuantsCollector(MarketDataCollector):
             headers["Authorization"] = f"Bearer {self._id_token}"
         data = json.dumps(body).encode("utf-8") if body is not None else None
         try:
-            with urlopen(Request(f"{self.base_url}{path}", data=data, headers=headers, method=method), timeout=15) as response:
+            with urlopen(Request(f"{self.base_url_v1}{path}", data=data, headers=headers, method=method), timeout=15) as response:
                 return json.loads(response.read().decode("utf-8"))
         except (HTTPError, URLError, TimeoutError) as exc:
+            raise RuntimeError(f"J-Quants API request failed: {path}: {exc}") from exc
+
+    def _request_json_v2(self, path: str, params: dict[str, str]) -> dict:
+        query = f"?{urlencode(params)}" if params else ""
+        headers = {"Content-Type": "application/json", "x-api-key": get_settings().jquants_api_key}
+        url = f"{self.base_url_v2}{path}{query}"
+        try:
+            with urlopen(Request(url, headers=headers, method="GET"), timeout=15) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            body = exc.read().decode("utf-8", errors="replace")
+            raise RuntimeError(f"J-Quants API request failed: {path}: HTTP {exc.code}: {body}") from exc
+        except (URLError, TimeoutError) as exc:
             raise RuntimeError(f"J-Quants API request failed: {path}: {exc}") from exc
 
     def _fetch_id_token(self) -> str:
@@ -132,3 +158,18 @@ def _as_float(value: object) -> float | None:
     if value in (None, ""):
         return None
     return float(value)
+
+
+def _first_present(row: dict, *keys: str) -> object:
+    for key in keys:
+        value = row.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def _normalize_symbol(value: object) -> str:
+    symbol = str(value or "").strip()
+    if len(symbol) == 5 and symbol.endswith("0"):
+        return symbol[:4]
+    return symbol

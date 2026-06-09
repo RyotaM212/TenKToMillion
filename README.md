@@ -46,7 +46,9 @@ SCHEDULER_ENABLED=true
 08:30 候補銘柄抽出
 09:10 ペーパートレード
 15:30 日次分析
-16:00 改善案生成
+15:45 LLM日次分析
+16:00 LLM提案バックテスト
+16:15 改善案生成
 ```
 
 手動で当日分を作る場合は、Dashboard のボタンまたは以下を実行します。
@@ -60,13 +62,39 @@ curl -X POST http://localhost:8000/api/bot/run-optimization
 
 ## Secret 設定
 
-Yahoo系データ取得にはSecretは不要です。J-Quantsを使う場合のみ以下が必要です。
+Yahoo系データ取得にはSecretは不要です。J-Quantsを使う場合は、J-Quants API V2のAPIキーを設定します。
 
 ```text
 DATA_SOURCE=jquants
-JQUANTS_EMAIL=...
-JQUANTS_PASSWORD=...
+JQUANTS_API_KEY=...
 ```
+
+旧APIの互換用として `JQUANTS_EMAIL` / `JQUANTS_PASSWORD` も読み込みますが、通常は `JQUANTS_API_KEY` を使ってください。
+
+LLM AnalystはOpenAI APIキーがない場合、自動で `MockAnalystClient` を使います。ChatGPT/OpenAIで本番分析する場合は以下を設定してください。
+
+```text
+OPENAI_API_KEY=...
+OPENAI_ANALYST_MODEL=gpt-4.1-mini
+```
+
+LLMは売買注文を出しません。出力はDBへ保存され、提案パラメータは `strategy_experiments` に検証候補として保存されます。提案は即時採用されず、バックテスト結果と採用条件の確認対象になります。
+
+### Secretの安全な配置
+
+APIキーやパスワードをターミナル履歴やチャットに残さないため、`set_secret.py` で `.env` を更新します。
+
+```bash
+cd trading-bot/backend
+python scripts/set_secret.py OPENAI_API_KEY
+python scripts/set_secret.py OPENAI_ANALYST_MODEL --value gpt-4.1-mini
+python scripts/set_secret.py DATA_SOURCE --value jquants
+python scripts/set_secret.py JQUANTS_API_KEY
+```
+
+`OPENAI_API_KEY` は OpenAI Platform の API keys 画面で作成します。表示されたキーはこのスクリプトのプロンプトに貼り付けてください。`.env` は `.gitignore` 対象なのでcommitされません。
+
+`JQUANTS_API_KEY` は J-Quants のAPIキー管理画面で作成します。未設定の間は `DATA_SOURCE=yahoo` のままでも実データ取得は動きます。
 
 `.env` は `.gitignore` 対象です。実際の認証情報はGitHubにcommitしないでください。
 
@@ -77,15 +105,18 @@ APP_ENV=local
 DATABASE_PATH=./tenk_to_million.db
 DATA_SOURCE=yahoo
 INITIAL_CASH=10000
+JQUANTS_API_KEY=
 JQUANTS_EMAIL=
 JQUANTS_PASSWORD=
 YAHOO_FINANCE_ENABLED=true
+OPENAI_API_KEY=
+OPENAI_ANALYST_MODEL=gpt-4.1-mini
 MARKET_SYMBOLS=3778,2160,4565,6920,5253,7014,1514,5586,5595,6526
 SCHEDULER_ENABLED=true
 CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-`JQuantsCollector` は公式APIの認証フローで上場銘柄情報と日足四本値を取得します。`YahooCollector` はYahoo Finance系のチャートデータを利用して日足・5分足相当のデータを取得します。認証情報が未設定、またはYahoo取得が無効な場合は明示的に失敗し、秘密情報をログに出しません。
+`JQuantsCollector` は J-Quants API V2 のAPIキー認証で上場銘柄情報と日足四本値を取得します。`YahooCollector` はYahoo Finance系のチャートデータを利用して日足・5分足相当のデータを取得します。認証情報が未設定、またはYahoo取得が無効な場合は明示的に失敗し、秘密情報をログに出しません。
 
 ## ローカル開発
 
@@ -124,6 +155,9 @@ GET  /api/reports/daily
 GET  /api/strategy/params
 GET  /api/strategy/comparison
 GET  /api/experiments
+GET  /api/llm/reports
+GET  /api/llm/reports/latest
+GET  /api/llm/runs
 POST /api/bot/run-screening
 POST /api/bot/run-paper-trade
 POST /api/bot/run-analysis
@@ -131,6 +165,8 @@ POST /api/bot/run-optimization
 POST /api/bot/set-mode
 POST /api/bot/set-data-source
 POST /api/bot/set-strategy
+POST /api/llm/run-daily-analysis
+POST /api/llm/backtest-proposals
 ```
 
 ## 注意事項
