@@ -2,6 +2,7 @@ import json
 from datetime import date
 
 from app.analysis.backtester import Backtester
+from app.analysis.strategy_params_repository import adopt_experiment
 from app.db import execute, fetch_all
 from app.models import STRATEGY_NAMES
 
@@ -24,6 +25,8 @@ class Optimizer:
             }
             result = self.backtester.mini_backtest(strategy_name, proposed)
             adopted = result["profit_rate"] > 0 and result["max_drawdown"] >= -0.03 and result["trade_count"] >= 3
+            if adopted:
+                adopt_experiment(strategy_name, proposed, date.today())
             execute(
                 """
                 INSERT INTO strategy_experiments(

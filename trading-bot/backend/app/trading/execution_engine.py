@@ -57,7 +57,7 @@ class ExecutionEngine:
                         mode,
                         candidate,
                         snapshot,
-                        StrategyParams(strategy_name=strategy.name),
+                        strategy.params,
                         realized_pnl,
                         locked_profit,
                         already_traded,

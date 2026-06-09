@@ -5,6 +5,7 @@ from datetime import date, datetime
 from typing import Any
 
 from app.analysis.backtester import Backtester
+from app.analysis.strategy_params_repository import adopt_experiment
 from app.db import execute, fetch_all, fetch_one
 from app.llm.analyst_client import build_analyst_client
 from app.llm.prompt_builder import PromptBuilder
@@ -153,6 +154,8 @@ class AnalystService:
         strategy_name = self._active_strategy()
         backtest_result = self.backtester.mini_backtest(strategy_name, proposed_params)
         adopted = self._is_adoptable(backtest_result)
+        if adopted:
+            adopt_experiment(strategy_name, proposed_params, analysis_date)
         execute(
             """
             INSERT INTO strategy_experiments(

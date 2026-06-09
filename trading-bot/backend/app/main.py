@@ -8,7 +8,17 @@ from app.analysis.strategy_evaluator import StrategyEvaluator
 from app.db import fetch_all, init_db
 from app.llm.analyst_service import AnalystService
 from app.scheduler.jobs import build_scheduler
-from app.services import dashboard, default_strategy_params, run_analysis, run_optimization, run_paper_trade, run_screening, set_app_state
+from app.services import (
+    dashboard,
+    default_strategy_params,
+    force_exit_all_positions,
+    run_analysis,
+    run_optimization,
+    run_paper_trade,
+    run_screening,
+    set_app_state,
+    stop_new_entries,
+)
 
 
 app = FastAPI(title="TenKToMillion Paper Trading API")
@@ -116,6 +126,16 @@ def post_run_screening():
 @app.post("/api/bot/run-paper-trade")
 def post_run_paper_trade():
     return run_paper_trade()
+
+
+@app.post("/api/bot/stop-new-entries")
+def post_stop_new_entries():
+    return stop_new_entries()
+
+
+@app.post("/api/bot/force-exit-all-positions")
+def post_force_exit_all_positions():
+    return force_exit_all_positions()
 
 
 @app.post("/api/bot/run-analysis")

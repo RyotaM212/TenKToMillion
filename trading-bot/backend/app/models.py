@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Literal
 
 
 CAPITAL_MODES = ("YOLO_MODE", "LOCK_PROFIT_MODE", "ONE_SHOT_MODE")
@@ -48,3 +49,15 @@ class StrategyParams:
     volume_spike_threshold: float = 3.0
     breakout_threshold: float = 0.01
     vwap_exit_enabled: bool = True
+
+
+@dataclass(frozen=True)
+class OrderRequest:
+    side: Literal["buy", "sell"]
+    symbol: str
+    quantity: int
+    price: float
+    order_type: Literal["cash"] = "cash"
+    leverage: float = 1.0
+    allow_overnight: bool = False
+    is_averaging_down: bool = False

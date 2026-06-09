@@ -51,6 +51,8 @@ SCHEDULER_ENABLED=true
 16:15 改善案生成
 ```
 
+設計上の `09:00〜09:10 監視のみ`、`10:30 新規エントリー停止`、`14:45 強制決済` は、現MVPではペーパートレードのシミュレーション内ルールとして扱っています。実時間でポジションを持ち続ける実売買・常時監視プロセスはまだ実装していません。
+
 手動で当日分を作る場合は、Dashboard のボタンまたは以下を実行します。
 
 ```bash
@@ -118,6 +120,38 @@ CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 
 `JQuantsCollector` は J-Quants API V2 のAPIキー認証で上場銘柄情報と日足四本値を取得します。`YahooCollector` はYahoo Finance系のチャートデータを利用して日足・5分足相当のデータを取得します。認証情報が未設定、またはYahoo取得が無効な場合は明示的に失敗し、秘密情報をログに出しません。
 
+## 設計書との差分と現在の実装状態
+
+現状は、初期設計の「Mockでも全機能を動かす」段階から進めて、J-Quants実データ前提のローカルMVPに寄せています。
+
+```text
+実装済み:
+- FastAPI backend / React Vite frontend / SQLite / APScheduler
+- J-Quants API V2 x-api-key 認証
+- Yahoo系データ取得口
+- 候補生成、スコアリング、4戦略比較
+- 3資金管理モードの同時ペーパー検証
+- 日次レポート、戦略比較、改善案保存、採用済みパラメータ反映
+- OpenAI LLM Analyst、JSON検証、提案リプレイバックテスト
+- 10:30 新規エントリー停止、14:45 仮想ポジション強制決済ジョブ
+- Docker Compose ローカル起動
+- GitHub Actions CI
+
+意図的に実装しない/無効化:
+- 実売買、証券口座発注、信用取引、空売り、レバレッジ
+- 証券サイトスクレイピング、ブラウザ自動操作による注文
+- Mockデータソースの実運用選択肢
+
+未完成/今後の強化対象:
+- SQLAlchemyモデル分離
+- pytest化とテスト粒度の拡張
+- 5分足・板・スプレッド・ニュース取得の実データ連携
+- 直近3営業日安定性を含む採用判定の高度化
+- kabuステーションAPIなど公式実売買API接続
+```
+
+`MockCollector` と `MockAnalystClient` は、J-Quants/OpenAIの実キーを使う運用に切り替えたため削除しました。テストでは外部APIに依存しない `FakeCollector` / `FakeAnalystClient` を使い、CIでパイプラインを検証しています。
+
 ## ローカル開発
 
 Dockerを使わずに起動する場合です。
@@ -142,6 +176,30 @@ npm install
 npm run dev
 ```
 
+## テスト・CI
+
+ローカルで主要検証を実行する場合です。
+
+```bash
+docker compose run --rm backend python -m unittest discover -s tests
+cd trading-bot/frontend
+npm run build
+cd ../..
+docker compose config --quiet
+docker compose build backend frontend
+```
+
+GitHub Actionsでは以下を実行します。
+
+```text
+Backend Tests: Python compile + unittest
+Frontend Build: npm ci + npm run build
+Docker Build: compose config + backend/frontend image build
+Security Checks: Secret文字列スキャン + whitespace check
+```
+
+CI用に `.env.example` を `.env` へコピーしてDocker構成を検証します。実際の `.env` とAPIキーはGitHubにcommitしません。
+
 ## API一覧
 
 ```text
@@ -160,6 +218,8 @@ GET  /api/llm/reports/latest
 GET  /api/llm/runs
 POST /api/bot/run-screening
 POST /api/bot/run-paper-trade
+POST /api/bot/stop-new-entries
+POST /api/bot/force-exit-all-positions
 POST /api/bot/run-analysis
 POST /api/bot/run-optimization
 POST /api/bot/set-mode
@@ -176,4 +236,5 @@ POST /api/llm/backtest-proposals
 - 初期資金は 10,000 円です。
 - 14:45 強制決済を前提に、持ち越しは禁止です。
 - 実売買は初期実装では不可です。
+- `ENABLE_LIVE_TRADING` は現時点では実装していません。将来追加しても、RiskGuardと公式API接続の検収が終わるまで実注文は行いません。
 - 投資判断は自己責任です。このアプリは利益を保証しません。

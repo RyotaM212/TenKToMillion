@@ -136,6 +136,17 @@ def run_paper_trade() -> dict[str, int]:
     return engine.run_paper_trades()
 
 
+def stop_new_entries() -> dict[str, str]:
+    execute("INSERT INTO app_state(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", ("entry_window", "closed"))
+    return {"entry_window": "closed"}
+
+
+def force_exit_all_positions() -> dict[str, int]:
+    positions = fetch_all("SELECT id FROM paper_positions")
+    execute("DELETE FROM paper_positions")
+    return {"closed": len(positions)}
+
+
 def run_analysis() -> dict[str, int]:
     return DailyAnalyzer().run()
 
@@ -184,8 +195,8 @@ def default_strategy_params() -> list[dict]:
     return [
         {
             "strategy_name": strategy.name,
-            "active_from": "MVP",
-            **StrategyParams(strategy_name=strategy.name).__dict__,
+            "active_from": "latest",
+            **strategy.params.__dict__,
         }
         for strategy in build_strategies()
     ]

@@ -6,4 +6,12 @@ from app.strategies.volume_strategy import VolumeStrategy
 
 
 def build_strategies() -> list[BaseStrategy]:
-    return [VolumeStrategy(), MomentumStrategy(), NewsStrategy(), HybridStrategy()]
+    from app.analysis.strategy_params_repository import latest_params_for_all
+
+    params = latest_params_for_all()
+    return [
+        VolumeStrategy(params["VolumeStrategy"]),
+        MomentumStrategy(params["MomentumStrategy"]),
+        NewsStrategy(params["NewsStrategy"]),
+        HybridStrategy(params["HybridStrategy"]),
+    ]

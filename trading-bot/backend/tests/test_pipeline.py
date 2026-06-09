@@ -15,7 +15,13 @@ from app.llm.schemas import AnalystClientResult
 from app.models import MarketSnapshot
 from app.scheduler.jobs import build_scheduler
 from app.services import run_analysis, run_optimization, run_paper_trade, run_screening, set_app_state
+from app.strategies import build_strategies
+from app.trading.capital_manager import CapitalManager
 from app.trading.live_broker_interface import LiveBrokerInterface
+from app.trading.paper_broker import PaperBroker
+from app.trading.risk_guard import RiskGuard
+from app.llm.response_parser import ResponseParser
+from app.models import Candidate, OrderRequest, StrategyParams
 
 
 class FakeCollector:
@@ -57,6 +63,20 @@ class FakeCollector:
                 close=136.0,
                 previous_close=110.0,
                 news_score=0.6,
+            ),
+            MarketSnapshot(
+                symbol="6920",
+                symbol_name="レーザーテック",
+                snapshot_time=datetime.fromisoformat(f"{date.today().isoformat()}T09:10:00"),
+                price=150.0,
+                volume=1_800_000,
+                vwap=145.0,
+                open=148.0,
+                high=178.0,
+                low=146.0,
+                close=170.0,
+                previous_close=135.0,
+                news_score=0.5,
             ),
         ]
 
@@ -119,6 +139,7 @@ class PipelineTest(unittest.TestCase):
         self.assertGreater(len(fetch_all("SELECT * FROM paper_trades")), 0)
         self.assertEqual(len(fetch_all("SELECT * FROM daily_reports")), 12)
         self.assertEqual(len(fetch_all("SELECT * FROM strategy_experiments")), 4)
+        self.assertGreater(len(fetch_all("SELECT * FROM strategy_params")), 0)
 
     def test_llm_analysis_requires_real_client_but_can_be_injected_for_tests(self) -> None:
         with patch("app.services.get_collector", return_value=FakeCollector()):
@@ -141,6 +162,8 @@ class PipelineTest(unittest.TestCase):
             {
                 "screening",
                 "paper_trade",
+                "stop_new_entries",
+                "force_exit_all_positions",
                 "daily_analysis",
                 "llm_daily_analysis",
                 "llm_backtest_proposals",
@@ -155,3 +178,66 @@ class PipelineTest(unittest.TestCase):
             LiveBrokerInterface().buy("2160", 100)
         with self.assertRaises(NotImplementedError):
             LiveBrokerInterface().sell("2160", 100)
+
+    def test_capital_manager_modes(self) -> None:
+        manager = CapitalManager(10_000)
+        self.assertEqual(manager.buying_power("YOLO_MODE", 500, 0), 10_500)
+        self.assertEqual(manager.buying_power("LOCK_PROFIT_MODE", 500, 250), 10_250)
+        self.assertEqual(manager.locked_profit_after_trade("LOCK_PROFIT_MODE", 0, 800), 400)
+        self.assertEqual(manager.quantity_for(10_000, 120), 83)
+
+    def test_risk_guard_order_rules(self) -> None:
+        guard = RiskGuard()
+        cash = {"cash": 10_000}
+        self.assertEqual(guard.validate_order(OrderRequest("buy", "2160", 10, 100), cash, [])[0], True)
+        self.assertEqual(guard.validate_order(OrderRequest("buy", "2160", 101, 100), cash, [])[0], False)
+        self.assertEqual(guard.validate_order(OrderRequest("sell", "2160", 1, 100), cash, [])[0], False)
+        self.assertEqual(guard.validate_order(OrderRequest("buy", "2160", 1, 100, order_type="cash", leverage=2), cash, [])[0], False)
+        self.assertEqual(guard.validate_order(OrderRequest("buy", "2160", 1, 100, allow_overnight=True), cash, [])[0], False)
+
+    def test_paper_broker_and_strategy_entry_use_params(self) -> None:
+        snapshot = FakeCollector().fetch_ranking()[0]
+        candidate = Candidate(
+            trade_date=date.today().isoformat(),
+            symbol=snapshot.symbol,
+            symbol_name=snapshot.symbol_name,
+            score=80,
+            strategy_name="VolumeStrategy",
+            volume_spike_score=1,
+            price_change_score=1,
+            gap_up_score=1,
+            volatility_score=1,
+            news_score=0,
+            liquidity_score=1,
+            selected_reason="test",
+        )
+        strategy = build_strategies()[0]
+        self.assertTrue(strategy.can_enter(snapshot, candidate.score))
+        result = PaperBroker(10_000, persist=False).run_for_candidate(
+            "YOLO_MODE",
+            candidate,
+            snapshot,
+            StrategyParams("VolumeStrategy", take_profit_rate=0.1),
+            0,
+            0,
+            False,
+        )
+        self.assertIsNotNone(result)
+        self.assertGreater(float(result["pnl"]), 0)
+
+    def test_response_parser_rejects_invalid_and_forbidden_outputs(self) -> None:
+        parser = ResponseParser()
+        with self.assertRaises(ValueError):
+            parser.parse("{}")
+        forbidden = {
+            "summary_text": "x",
+            "win_patterns": [],
+            "lose_patterns": [],
+            "risk_notes": ["信用取引を使う"],
+            "improvement_suggestions": [],
+            "next_day_hypotheses": [],
+            "proposed_params": {},
+            "confidence_score": 0.5,
+        }
+        with self.assertRaises(ValueError):
+            parser.parse(json.dumps(forbidden, ensure_ascii=False))

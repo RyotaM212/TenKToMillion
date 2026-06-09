@@ -1,13 +1,15 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.llm.analyst_service import AnalystService
-from app.services import run_analysis, run_optimization, run_paper_trade, run_screening
+from app.services import force_exit_all_positions, run_analysis, run_optimization, run_paper_trade, run_screening, stop_new_entries
 
 
 def build_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler(timezone="Asia/Tokyo")
     scheduler.add_job(run_screening, "cron", hour=8, minute=30, id="screening")
     scheduler.add_job(run_paper_trade, "cron", hour=9, minute=10, id="paper_trade")
+    scheduler.add_job(stop_new_entries, "cron", hour=10, minute=30, id="stop_new_entries")
+    scheduler.add_job(force_exit_all_positions, "cron", hour=14, minute=45, id="force_exit_all_positions")
     scheduler.add_job(run_analysis, "cron", hour=15, minute=30, id="daily_analysis")
     scheduler.add_job(_run_llm_daily_analysis, "cron", hour=15, minute=45, id="llm_daily_analysis")
     scheduler.add_job(_backtest_llm_proposals, "cron", hour=16, minute=0, id="llm_backtest_proposals")
