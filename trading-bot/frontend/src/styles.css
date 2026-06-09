@@ -176,9 +176,25 @@ tbody tr:hover {
 }
 
 .topbarBrand {
+  align-items: center;
+  display: flex;
+  gap: 13px;
+}
+
+.topbarBrand > div {
   align-items: baseline;
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.appLogo {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--border), 0 10px 28px rgba(34, 211, 238, 0.14);
+  display: block;
+  flex: 0 0 auto;
+  height: 46px;
+  width: 46px;
 }
 
 .topbar h1 {

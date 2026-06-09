@@ -115,8 +115,11 @@ export function Dashboard() {
       <header className="topbar">
         <div>
           <div className="topbarBrand">
-            <h1>TenKToMillion</h1>
-            <span className="liveTag">Paper</span>
+            <img className="appLogo" src="/app-icon.svg" alt="" aria-hidden="true" />
+            <div>
+              <h1>TenKToMillion</h1>
+              <span className="liveTag">Paper</span>
+            </div>
           </div>
           <p>現物・空売りなし・レバレッジなし。実注文は無効化されています。</p>
         </div>
