@@ -16,7 +16,7 @@ export function StrategyComparison({ reports }: { reports: Report[] }) {
             <div className="sub">勝率 {(s.winRate * 100).toFixed(1)}%</div>
           </div>
         ))}
-        {strategies.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: 13 }}>まだレポートがありません。</p>}
+        {strategies.length === 0 && <div className="emptyState">まだレポートがありません</div>}
       </div>
     </section>
   );

@@ -245,7 +245,7 @@ tbody tr:hover {
 .statusStrip {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   margin-bottom: 16px;
 }
 
@@ -355,25 +355,39 @@ tbody tr:hover {
 /* ── Panel ── */
 .panel {
   background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border);
   border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
   grid-column: span 6;
   min-width: 0;
   padding: 18px 20px;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .panel:hover {
-  border-color: var(--border);
+  border-color: rgba(34, 211, 238, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .panel h2 {
-  color: var(--text-secondary);
-  font-size: 12px;
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  gap: 7px;
+  letter-spacing: 0.07em;
   margin: 0 0 16px;
   text-transform: uppercase;
+}
+
+.panel h2::before {
+  background: var(--accent);
+  border-radius: 2px;
+  content: "";
+  flex-shrink: 0;
+  height: 10px;
+  width: 2px;
 }
 
 .panelHeader {
@@ -386,6 +400,10 @@ tbody tr:hover {
 
 .panelHeader h2 {
   margin: 0;
+}
+
+.panelHeader .muted {
+  margin-top: 4px;
 }
 
 .tableWrap {
@@ -529,14 +547,63 @@ tbody tr:hover {
   font-size: 11px;
 }
 
+/* ── Empty state ── */
+.emptyState {
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  gap: 8px;
+  justify-content: center;
+  min-height: 80px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.emptyStateIcon {
+  color: var(--border);
+  margin-bottom: 2px;
+}
+
+/* ── Chart empty ── */
+.chartEmpty {
+  align-items: center;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  gap: 8px;
+  height: 240px;
+  justify-content: center;
+}
+
 /* ── LLM Panel ── */
 .llmPanel {
   grid-column: span 12;
   border-color: rgba(167, 139, 250, 0.2);
 }
 
-.costPanel {
-  grid-column: span 6;
+.llmPanel h2::before {
+  background: var(--ai);
+}
+
+/* LlmAnalystPanel uses inline icon — hide the bar pseudo-element */
+.llmPanel .panelHeader h2::before {
+  display: none;
+}
+
+.costPanel h2::before {
+  background: var(--warning);
+}
+
+.dataSourcePanel h2::before {
+  background: var(--accent);
+}
+
+.costPanel,
+.dataSourcePanel {
+  grid-column: span 12;
 }
 
 .dataSourcePanel {
@@ -870,6 +937,10 @@ tbody tr:hover {
 @media (max-width: 768px) {
   .appShell {
     padding: 16px;
+  }
+
+  .statusStrip {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .dashboardGrid {

@@ -16,7 +16,7 @@ export function ModeComparison({ reports }: { reports: Report[] }) {
             <div className="sub">{mode.trades} trades</div>
           </div>
         ))}
-        {modes.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: 13 }}>まだレポートがありません。</p>}
+        {modes.length === 0 && <div className="emptyState">まだレポートがありません</div>}
       </div>
     </section>
   );

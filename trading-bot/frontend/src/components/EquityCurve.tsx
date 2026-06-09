@@ -1,15 +1,27 @@
+import { TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Report } from "../api";
 
 export function EquityCurve({ reports }: { reports: Report[] }) {
-  const data = [...reports].reverse().map((report, index) => ({
+  const data = [...reports].reverse().map((report) => ({
     name: report.trade_date,
     equity: report.end_cash,
-    index,
   }));
 
-  const min = data.length ? Math.min(...data.map((d) => d.equity)) * 0.998 : 9000;
-  const max = data.length ? Math.max(...data.map((d) => d.equity)) * 1.002 : 11000;
+  if (data.length === 0) {
+    return (
+      <section className="panel">
+        <h2>資産推移</h2>
+        <div className="chartEmpty">
+          <TrendingUp size={28} className="emptyStateIcon" />
+          <span>ペーパー実行後にグラフが表示されます</span>
+        </div>
+      </section>
+    );
+  }
+
+  const min = Math.min(...data.map((d) => d.equity)) * 0.998;
+  const max = Math.max(...data.map((d) => d.equity)) * 1.002;
 
   return (
     <section className="panel">

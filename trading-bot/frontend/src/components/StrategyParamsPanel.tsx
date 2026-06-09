@@ -14,9 +14,7 @@ export function StrategyParamsPanel({ experiments }: { experiments: Experiment[]
             <span className={experiment.adopted ? "badge adopted" : "badge"}>{experiment.adopted ? "採用候補" : "保留"}</span>
           </article>
         ))}
-        {experiments.length === 0 && (
-          <p style={{ color: "var(--text-muted)", fontSize: 13, margin: 0 }}>まだ改善提案がありません。</p>
-        )}
+        {experiments.length === 0 && <div className="emptyState">まだ改善提案がありません</div>}
       </div>
     </section>
   );
