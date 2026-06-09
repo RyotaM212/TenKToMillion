@@ -1,0 +1,266 @@
+:root {
+  color: #17201f;
+  background: #f5f7f4;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button {
+  align-items: center;
+  background: #116466;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-weight: 700;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+select {
+  background: white;
+  border: 1px solid #cbd8d0;
+  border-radius: 8px;
+  color: #17201f;
+  font: inherit;
+  min-height: 40px;
+  min-width: 180px;
+  padding: 0 12px;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  border-bottom: 1px solid #dde5df;
+  padding: 10px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  background: #eef3ef;
+  color: #52605d;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.appShell {
+  margin: 0 auto;
+  max-width: 1440px;
+  padding: 24px;
+}
+
+.topbar {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.topbar h1 {
+  font-size: 32px;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.topbar p,
+.footerNote {
+  color: #596764;
+  margin: 6px 0 0;
+}
+
+.iconButton {
+  aspect-ratio: 1;
+  justify-content: center;
+  padding: 0;
+  width: 42px;
+}
+
+.statusStrip,
+.comparisonGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.statusStrip {
+  margin-top: 20px;
+}
+
+.metricCard {
+  background: white;
+  border: 1px solid #dde5df;
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  min-height: 104px;
+  padding: 14px;
+}
+
+.metricCard span {
+  color: #596764;
+  font-size: 13px;
+}
+
+.metricCard strong {
+  font-size: 20px;
+}
+
+.metricIcon svg {
+  color: #116466;
+  height: 20px;
+  width: 20px;
+}
+
+.actionBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 10px;
+}
+
+.settingsBar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.settingsBar label {
+  align-items: center;
+  color: #52605d;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.dashboardGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.panel {
+  background: white;
+  border: 1px solid #dde5df;
+  border-radius: 8px;
+  grid-column: span 6;
+  min-width: 0;
+  padding: 16px;
+}
+
+.panel h2 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.chart {
+  height: 280px;
+}
+
+.positive {
+  color: #0b7a45;
+}
+
+.negative {
+  color: #bd2d2d;
+}
+
+.errorBox,
+.loading {
+  border-radius: 8px;
+  margin: 12px 0;
+  padding: 12px 14px;
+}
+
+.errorBox {
+  background: #fff0ef;
+  color: #9f2525;
+}
+
+.loading {
+  background: #eef3ef;
+  color: #52605d;
+}
+
+.experimentList {
+  display: grid;
+  gap: 10px;
+}
+
+.experimentItem {
+  align-items: center;
+  border: 1px solid #dde5df;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.experimentItem p {
+  color: #596764;
+  margin: 4px 0 0;
+}
+
+.badge {
+  background: #eef3ef;
+  border-radius: 999px;
+  color: #52605d;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.badge.adopted {
+  background: #e1f5eb;
+  color: #0b7a45;
+}
+
+.footerNote {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .appShell {
+    padding: 16px;
+  }
+
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    grid-column: 1;
+  }
+}
