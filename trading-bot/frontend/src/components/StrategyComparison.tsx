@@ -4,15 +4,19 @@ export function StrategyComparison({ reports }: { reports: Report[] }) {
   const strategies = aggregate(reports);
   return (
     <section className="panel">
-      <h2>戦略AI別比較</h2>
+      <h2>戦略別比較</h2>
       <div className="comparisonGrid">
-        {strategies.map((strategy) => (
-          <div className="metricCard" key={strategy.name}>
-            <span>{strategy.name}</span>
-            <strong className={strategy.pnl >= 0 ? "positive" : "negative"}>{strategy.pnl.toLocaleString()}円</strong>
-            <small>勝率 {(strategy.winRate * 100).toFixed(1)}%</small>
+        {strategies.map((s) => (
+          <div className="comparisonCard" key={s.name}>
+            <div className="name">{s.name}</div>
+            <div className={`value ${s.pnl >= 0 ? "positive" : "negative"}`}>
+              {s.pnl >= 0 ? "+" : ""}
+              {s.pnl.toLocaleString()}円
+            </div>
+            <div className="sub">勝率 {(s.winRate * 100).toFixed(1)}%</div>
           </div>
         ))}
+        {strategies.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: 13 }}>まだレポートがありません。</p>}
       </div>
     </section>
   );

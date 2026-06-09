@@ -41,6 +41,22 @@ export type Experiment = {
   reason: string;
 };
 
+export type LlmAnalysisReport = {
+  id: number;
+  analysis_date: string;
+  model_name: string;
+  summary_text: string;
+  win_patterns: string;
+  lose_patterns: string;
+  risk_notes: string;
+  improvement_suggestions: string;
+  next_day_hypotheses: string;
+  proposed_params_json: string;
+  confidence_score: number;
+  backtest_result_json: string;
+  adopted: number;
+};
+
 export type DashboardData = {
   current_asset: number;
   buying_power: number;
@@ -57,6 +73,7 @@ export type DashboardData = {
   trades: Trade[];
   reports: Report[];
   experiments: Experiment[];
+  llm_report: LlmAnalysisReport | null;
 };
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -71,6 +88,14 @@ export async function fetchDashboard(): Promise<DashboardData> {
 
 export async function postBotAction(action: "run-screening" | "run-paper-trade" | "run-analysis" | "run-optimization") {
   const response = await fetch(`${API_BASE}/api/bot/${action}`, { method: "POST" });
+  if (!response.ok) {
+    throw new Error(`${action} の実行に失敗しました`);
+  }
+  return response.json();
+}
+
+export async function postLlmAction(action: "run-daily-analysis" | "backtest-proposals") {
+  const response = await fetch(`${API_BASE}/api/llm/${action}`, { method: "POST" });
   if (!response.ok) {
     throw new Error(`${action} の実行に失敗しました`);
   }

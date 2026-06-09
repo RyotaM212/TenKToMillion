@@ -19,14 +19,26 @@ export function TradeTable({ trades }: { trades: Trade[] }) {
           <tbody>
             {trades.map((trade) => (
               <tr key={trade.id}>
-                <td>{trade.mode}</td>
-                <td>{trade.strategy_name}</td>
-                <td>{trade.symbol_name}</td>
-                <td>{trade.quantity}</td>
-                <td className={trade.pnl >= 0 ? "positive" : "negative"}>{trade.pnl.toLocaleString()}円</td>
-                <td>{trade.exit_reason}</td>
+                <td style={{ color: "var(--text-muted)", fontSize: 11, fontWeight: 600, letterSpacing: "0.04em" }}>{trade.mode}</td>
+                <td>
+                  <span className="strategyTag">{trade.strategy_name}</span>
+                </td>
+                <td style={{ fontWeight: 600 }}>{trade.symbol_name}</td>
+                <td style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{trade.quantity}</td>
+                <td className={`pnlCell ${trade.pnl >= 0 ? "positive" : "negative"}`}>
+                  {trade.pnl >= 0 ? "+" : ""}
+                  {trade.pnl.toLocaleString()}円
+                </td>
+                <td style={{ color: "var(--text-muted)", fontSize: 12 }}>{trade.exit_reason}</td>
               </tr>
             ))}
+            {trades.length === 0 && (
+              <tr>
+                <td colSpan={6} style={{ color: "var(--text-muted)", textAlign: "center", padding: "24px" }}>
+                  取引履歴がありません。
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

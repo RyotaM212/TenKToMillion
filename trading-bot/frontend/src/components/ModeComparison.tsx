@@ -7,12 +7,16 @@ export function ModeComparison({ reports }: { reports: Report[] }) {
       <h2>モード別比較</h2>
       <div className="comparisonGrid">
         {modes.map((mode) => (
-          <div className="metricCard" key={mode.name}>
-            <span>{mode.name}</span>
-            <strong className={mode.pnl >= 0 ? "positive" : "negative"}>{mode.pnl.toLocaleString()}円</strong>
-            <small>{mode.trades} trades</small>
+          <div className="comparisonCard" key={mode.name}>
+            <div className="name">{mode.name}</div>
+            <div className={`value ${mode.pnl >= 0 ? "positive" : "negative"}`}>
+              {mode.pnl >= 0 ? "+" : ""}
+              {mode.pnl.toLocaleString()}円
+            </div>
+            <div className="sub">{mode.trades} trades</div>
           </div>
         ))}
+        {modes.length === 0 && <p style={{ color: "var(--text-muted)", fontSize: 13 }}>まだレポートがありません。</p>}
       </div>
     </section>
   );
