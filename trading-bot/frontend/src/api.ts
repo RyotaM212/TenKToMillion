@@ -1,14 +1,17 @@
 export type Candidate = {
   id: number;
+  trade_date: string;
   symbol: string;
   symbol_name: string;
   score: number;
   strategy_name: string;
   selected_reason: string;
+  created_at?: string;
 };
 
 export type Trade = {
   id: number;
+  trade_date: string;
   mode: string;
   strategy_name: string;
   symbol: string;
@@ -19,6 +22,7 @@ export type Trade = {
   pnl: number;
   pnl_rate: number;
   exit_reason: string;
+  created_at?: string;
 };
 
 export type Report = {
@@ -30,15 +34,18 @@ export type Report = {
   daily_pnl: number;
   win_rate: number;
   max_drawdown: number;
+  created_at?: string;
 };
 
 export type Experiment = {
   id: number;
+  experiment_date?: string;
   strategy_name: string;
   proposed_params_json: string;
   backtest_result_json: string;
   adopted: number;
   reason: string;
+  created_at?: string;
 };
 
 export type LlmAnalysisReport = {
@@ -55,6 +62,7 @@ export type LlmAnalysisReport = {
   confidence_score: number;
   backtest_result_json: string;
   adopted: number;
+  created_at?: string;
 };
 
 export type LlmCostItem = {
@@ -123,7 +131,20 @@ export type DashboardData = {
   llm_report: LlmAnalysisReport | null;
 };
 
+export type HealthStatus = {
+  ok: boolean;
+  scheduler_enabled: boolean;
+};
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+
+export async function fetchHealth(): Promise<HealthStatus> {
+  const response = await fetch(`${API_BASE}/api/health`);
+  if (!response.ok) {
+    throw new Error("Health API の取得に失敗しました");
+  }
+  return response.json();
+}
 
 export async function fetchDashboard(): Promise<DashboardData> {
   const response = await fetch(`${API_BASE}/api/dashboard`);

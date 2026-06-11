@@ -1,8 +1,9 @@
 import { Activity, AlertCircle, BarChart3, Bot, Database, Play, RefreshCw, ShieldCheck, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import type { DashboardData, DataSourceComparison, LlmCostHistory } from "../api";
-import { fetchDashboard, fetchDataSourceComparison, fetchLlmCosts, postBotAction, postLlmAction, postState } from "../api";
+import type { DashboardData, DataSourceComparison, HealthStatus, LlmCostHistory } from "../api";
+import { fetchDashboard, fetchDataSourceComparison, fetchHealth, fetchLlmCosts, postBotAction, postLlmAction, postState } from "../api";
+import { AutomationProgressPanel } from "../components/AutomationProgressPanel";
 import { CandidateList } from "../components/CandidateList";
 import { DataSourceComparisonPanel } from "../components/DataSourceComparisonPanel";
 import { EquityCurve } from "../components/EquityCurve";
@@ -39,17 +40,27 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [costs, setCosts] = useState<LlmCostHistory | null>(null);
   const [comparison, setComparison] = useState<DataSourceComparison | null>(null);
+  const [health, setHealth] = useState<HealthStatus | null>(null);
 
   async function load() {
     setError(null);
     try {
-      const [dashboard, costHistory] = await Promise.all([fetchDashboard(), fetchLlmCosts()]);
+      const [dashboard, costHistory, healthStatus] = await Promise.all([fetchDashboard(), fetchLlmCosts(), fetchHealth()]);
       setData(dashboard);
       setCosts(costHistory);
+      setHealth(healthStatus);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "不明なエラーが発生しました");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function refreshHealth() {
+    try {
+      setHealth(await fetchHealth());
+    } catch {
+      setHealth({ ok: false, scheduler_enabled: false });
     }
   }
 
@@ -106,6 +117,10 @@ export function Dashboard() {
 
   useEffect(() => {
     void load();
+    const timer = window.setInterval(() => {
+      void refreshHealth();
+    }, 30_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   const isBusy = running !== null;
@@ -124,6 +139,7 @@ export function Dashboard() {
           <p>現物・空売りなし・レバレッジなし。実注文は無効化されています。</p>
         </div>
         <div className="topbarActions">
+          <SystemStatus health={health} />
           <button className="iconButton" onClick={() => void load()} title="更新" type="button" disabled={isBusy}>
             <RefreshCw size={15} />
           </button>
@@ -138,6 +154,8 @@ export function Dashboard() {
         <Metric icon={<Database size={15} />} label="データソース" value={data.data_source} />
         <Metric icon={<Bot size={15} />} label="資金管理モード" value={data.mode} />
       </section>
+
+      <AutomationProgressPanel data={data} health={health} running={running} />
 
       <section className="actionBar">
         <ActionButton label="候補生成" action="run-screening" running={running} onRun={run} />
@@ -207,6 +225,19 @@ export function Dashboard() {
         TenKToMillion — ペーパートレード専用。リアル市場データはシミュレーション検証にのみ使用します。
       </footer>
     </main>
+  );
+}
+
+function SystemStatus({ health }: { health: HealthStatus | null }) {
+  const online = health?.ok === true;
+  return (
+    <div className={`systemStatus${online ? " online" : " offline"}`} title={online ? "Docker backend is healthy" : "Backend health check failed"}>
+      <span className="statusDot" />
+      <div>
+        <strong>{online ? "SYSTEM ONLINE" : "SYSTEM OFFLINE"}</strong>
+        <span>{health?.scheduler_enabled ? "scheduler ON" : "scheduler OFF"}</span>
+      </div>
+    </div>
   );
 }
 

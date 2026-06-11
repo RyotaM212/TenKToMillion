@@ -221,6 +221,59 @@ tbody tr:hover {
   gap: 10px;
 }
 
+.systemStatus {
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  display: inline-flex;
+  gap: 9px;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.systemStatus strong,
+.systemStatus span {
+  display: block;
+}
+
+.systemStatus strong {
+  color: var(--text-secondary);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.systemStatus span {
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.2;
+}
+
+.statusDot {
+  border-radius: 50%;
+  height: 8px;
+  width: 8px;
+}
+
+.systemStatus.online {
+  border-color: rgba(63, 185, 80, 0.35);
+}
+
+.systemStatus.online .statusDot {
+  background: var(--positive);
+  box-shadow: 0 0 12px rgba(63, 185, 80, 0.5);
+}
+
+.systemStatus.offline {
+  border-color: rgba(248, 81, 73, 0.35);
+}
+
+.systemStatus.offline .statusDot {
+  background: var(--negative);
+  box-shadow: 0 0 12px rgba(248, 81, 73, 0.45);
+}
+
 .liveTag {
   align-items: center;
   background: var(--positive-dim);
@@ -255,6 +308,11 @@ tbody tr:hover {
   justify-content: center;
   padding: 0;
   width: 36px;
+}
+
+.iconButton.compact {
+  min-height: 28px;
+  width: 28px;
 }
 
 /* ── Status strip ── */
@@ -319,6 +377,162 @@ tbody tr:hover {
 .metricIcon {
   color: var(--text-muted);
   margin-bottom: auto;
+}
+
+/* ── Automation progress ── */
+.automationProgress {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.progressOverview {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.progressOverview h2 {
+  color: var(--text-primary);
+  font-size: 18px;
+  margin: 1px 0 3px;
+}
+
+.progressOverview p {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--accent) !important;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px !important;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.nextRunBox {
+  align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+  min-width: 210px;
+  padding: 10px 12px;
+}
+
+.nextRunBox svg {
+  color: var(--accent);
+}
+
+.nextRunBox span {
+  color: var(--text-muted);
+  display: block;
+  font-size: 11px;
+}
+
+.nextRunBox strong {
+  color: var(--text-primary);
+  display: block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+}
+
+.progressMeter {
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  height: 6px;
+  margin: 14px 0;
+  overflow: hidden;
+}
+
+.progressMeter span {
+  background: linear-gradient(90deg, var(--accent), var(--positive));
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  transition: width 0.35s ease;
+}
+
+.phaseRail {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.phaseStep {
+  align-items: flex-start;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  display: flex;
+  gap: 9px;
+  min-height: 92px;
+  padding: 11px;
+}
+
+.phaseIcon {
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text-muted);
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.phaseStep strong,
+.phaseStep span,
+.phaseStep p {
+  display: block;
+}
+
+.phaseStep strong {
+  font-size: 12px;
+  margin-bottom: 1px;
+}
+
+.phaseStep span {
+  color: var(--text-muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+}
+
+.phaseStep p {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+
+.phaseStep.done {
+  border-color: rgba(63, 185, 80, 0.3);
+}
+
+.phaseStep.done .phaseIcon {
+  background: var(--positive-dim);
+  border-color: rgba(63, 185, 80, 0.35);
+  color: var(--positive);
+}
+
+.phaseStep.active {
+  border-color: rgba(34, 211, 238, 0.45);
+  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+.phaseStep.active .phaseIcon {
+  background: var(--accent-dim);
+  border-color: rgba(34, 211, 238, 0.45);
+  color: var(--accent);
 }
 
 /* ── Action bar ── */
@@ -416,6 +630,20 @@ tbody tr:hover {
 
 .panelHeader h2 {
   margin: 0;
+}
+
+.pagerControls {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.pagerControls span {
+  color: var(--text-muted);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  min-width: 34px;
+  text-align: center;
 }
 
 .panelHeader .muted {
